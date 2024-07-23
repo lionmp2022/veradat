@@ -1,0 +1,87 @@
+
+spring:
+  datasource:
+   driver-class-name: oracle.jdbc.OracleDriver
+  hikari:
+    maxLifetime: 900000
+
+logging:
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    db:
+      enabled: true
+
+
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FAP
+  security:
+    permissions:
+      disabled: false
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general: 
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      output:
+        queues:
+          - name: feb.alerts_persisted.queue
+            exchange: feb.alerts.exchange
+            routingKey: feb.alerts_persisted.routing_key
+      input:
+        queues:
+          create: feb.alerts_persist.queue
+          anonimity: feb.alerts_update-node-alias.queue
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2

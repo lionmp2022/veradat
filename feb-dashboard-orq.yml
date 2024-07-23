@@ -1,0 +1,164 @@
+
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-dashboard-proc,feb-catalogs
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+
+
+
+veradat:
+  microserviceId: DBO
+  rest:
+    client: webclient 
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 20
+    initialRateLimit: 10
+    timeout: 50000 
+    responseTime_ms: 10000
+    conn_timeout: 15000
+    crt: /etc/crt
+    key: /etc/key
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+
+  restclients:
+     - name: OBTAIN_ENQUERIES_INFORMATION
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/card/originated
+       method: POST
+       external: false
+     - name: OBTAIN_ENQUERIES_HITS_INFORMATION
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/card/hits
+       method: POST
+       external: false
+     - name: OBTAIN_ENQUERIES_QUALITY_INFORMATION
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/card/enqueries-identifiers
+       method: POST
+       external: false
+     - name: VALIDATE_ORIGIN_TYPE
+       controller: feb-catalogs
+       path: /api/v1/catalogs/originTypes/validate/{businessKey}
+       method: GET
+       external: false
+     - name: VALIDATE_CATALOG_CASE
+       controller: feb-catalogs
+       path: /api/v1/catalogs/validate/{catalogType}/{businessKey}
+       method: GET
+       external: false
+     - name: OBTAIN_ENQUERY_PIE_INFORMATION_ORIGINATED
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/pie/information
+       method: POST
+       external: false
+     - name: OBTAIN_ENQUERY_PIE_INFORMATION_WITH_HITS
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/pie/information/w-hits
+       method: POST
+       external: false
+     - name: OBTAIN_ENQUERY_LINE_INFORMATION_ORIGINATED
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/line/originated
+       method: POST
+       external: false
+     - name: OBTAIN_ENQUERY_LINE_INFORMATION_WITH_HITS
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/line/w-hits
+       method: POST
+       external: false
+     - name: OBTAIN_USERS_RESUME
+       controller: veradat-feb-node-security-users-proc
+       path: /api/v1/users/resume
+       method: POST
+       external: false
+     - name: VALIDATE_CATALOG_CRYME_TYPE
+       controller: feb-catalogs
+       path: /api/v1/catalogs/crimeTypes/validate/{businessKey}
+       method: GET 
+       external: false
+     - name: OBTAIN_ALERTS_CARD
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/alert/card
+       method: POST
+       external: false
+     - name: OBTAIN_ALERTS_PIE_INFORMATION
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/alerts/pie/information
+       method: POST
+       external: false
+     - name: OBTAIN_ALERTS_LINE_INFORMATION
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/alerts/line/information
+       method: POST
+       external: false
+     - name: OBTAIN_NOTIFICATIONS
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/obtain/notifications/{crimeType}
+       method: GET
+       external: false
+     - name: OBTAIN_ASSOCIATED_HIT_CARD
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/associated-hits/card/information
+       method: POST
+       external: false
+     - name: OBTAIN_ASSOCIATED_HIT_PIE_INFORMATION
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/associated-hits/pie/information
+       method: POST
+       external: false
+     - name: OBTAIN_ASSOCIATED_HIT_LINE_INFORMATION
+       controller: feb-dashboard-proc
+       path: /api/v1/dashboards/enquery/associated-hits/line/information
+       method: POST
+       external: false
+ 
+  security:
+    permissions:
+      disabled: false
+
+jwt:
+  secret: $Pasdwew45sdf

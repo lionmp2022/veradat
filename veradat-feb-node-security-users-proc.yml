@@ -1,0 +1,156 @@
+
+spring:
+  main:
+    banner-mode: off    
+  data:
+    redis:
+      repositories:
+        enabled: false
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+  hikari:
+    maxLifetime: 900000
+    idleTimeout: 600000
+    connection-timeout: 20000
+    auto-commit: false
+    maximum-pool-size: 3
+    minimum-idle: 3
+  jpa:
+    properties:
+      hibernate:
+        order-inserts: true
+        order-updates: true
+        jdbc:
+          fetch_size: 1000
+    hibernate:
+      ddl-auto: validate
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+
+    
+jwt:
+   secret: $Pasdwew45sdf
+      
+veradat:
+  security:
+    transaction:
+      timeToLive: 1440
+    preauthorization:
+    - Q07
+    - Q14
+    - Q13
+    - UPT
+    - UUP
+    - RVP
+  resources:
+    restClients:
+    - name: GEN_PASS
+      controller: veradat-feb-node-users-security
+      path: /api/v1/security/pass/generate/{length}
+      method: GET
+  broker-messages:
+    global:
+      reprocessQueue: veradat.general_reprocess.queue
+      dlqQueue: veradat.general_dlq.queue
+      securityEventQueue: veradat.security_event.queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: veradat.general_reprocess.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: veradat.general_dlq.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: veradat.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      input:
+        queues:
+          createUser: vdt_security_create-user_queue
+          updateUser: vdt_security_update-user_queue
+          deleteUser: vdt_security_delete-user_queue
+          changeStatus: vdt_security_account-update-user_queue
+          changePassword: vdt_security_pass-change-user_queue
+          registerSessionHistory: vdt_security_session-history-user_queue
+          activateUser: vdt_security_account-activate_queue
+          registerActivationToken: vdt_security_account-activate-token_queue
+          registerRecoveryToken: vdt_security_account-recovery-pass-token_queue
+          activateAdminUser: vdt_security_configuration-activate-admin_queue
+          registerExternalUser: vdt_security_account-register-external_queue
+      output:
+        queues:
+        - name: vdt_security_send-request-activation_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_send-request-activation.routingkey
+        - name: vdt_security_send-activation-notification_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_send-activation-notification.routingkey
+        - name: vdt_security_send-admin-activation-notification_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_send-admin-activation-notification.routingkey
+        - name: vdt_security_send-change-pass-account_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_send-change-pass-account.routingkey
+
+        constants:
+          queues:
+            send-mail: feb.general_smtp-send-mail.queue
+            send-request-account-activation: vdt_security_send-request-activation_queue
+            send-confirm-activation-account: vdt_security_send-activation-notification_queue
+            send-adm-config-result: vdt_security_send-admin-activation-notification_queue
+            send-confirm-change-pass-account: vdt_security_send-change-pass-account_queue
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  messages:
+    validation:
+      not-null: "El dato es requerido"
+      not-empty: "El dato no puede ir vacío"
+      not-blank: "El dato no puede ir vacío"

@@ -1,0 +1,246 @@
+
+spring:    
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+  data:
+    redis:
+      repositories:
+        enabled: false
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-watchlist-proc,feb-sftp,feb-message-proc,feb-catalogs
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+
+veradat:
+  microserviceId: FMO
+  rest:
+    #Generales
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 10
+    initialRateLimit: 5
+    timeout: 50000 #timeout para las respuesta del server
+    responseTime_ms: 10000 # especifica el tiempo promedio en que se espera la respuesta del servidor
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100 
+    request_pending_on_queue_timeout_ms: 10000
+    response_limit_size: 2789213
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/key
+
+  security:
+    permissions:
+      disabled: false
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+
+      input:
+        queues:
+          close-conversations: feb.message_close-conversations.queue
+          get-ciphered-message: feb.message_get-ciphered-message.queue
+          get-ciphered-file: feb.message_get-ciphered-file.queue
+          get-public-key: feb.message_get-public-key.queue
+      output:
+        queues:
+          - name: PERSIST_MESSAGE
+            queue: feb.message_persist-message.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_persist-message.routing_key
+
+          - name: PERSIST_FILE
+            queue: feb.message_persist-file.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_persist-file.routing_key
+
+          - name: SEND_KEYNAME_REQUEST
+            queue: feb.message_send-keyname-request.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_send-keyname-request.routing_key
+
+          - name: CIPHER_MESSAGE
+            queue: feb.message_cipher-message.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_cipher-message.routing_key
+
+          - name: CIPHER_FILE
+            queue: feb.message_cipher-file.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_cipher-file.routing_key
+
+          - name: SEND_MESSAGE
+            queue: feb.message_send-message.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_send-message.routing_key
+
+          - name: SEND_FILE
+            queue: feb.message_send-file.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_send-file.routing_key
+
+          - name: PERSIST_STATUS
+            queue: feb.message_persist-status.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_persist-status.routing_key
+
+          - name: SEND_STATUS
+            queue: feb.message_send-status.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_send-status.routing_key
+
+          - name: PERSIST_ANONYMITY
+            queue: feb.message_persist-anonymity.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_persist-anonymity.routing_key
+
+          - name: SEND_ANONYMITY
+            queue: feb.message_send-anonymity.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_send-anonymity.routing_key
+
+          - name: UPLOAD_FILE_SFTP
+            queue: feb.general_sftp-upload-file.queue
+            exchange: feb.batch-general.exchange
+            routingKey: feb.general_sftp-upload-file.routing_key
+
+          - name: ASSIGN_USER
+            queue: feb.message_assign-user.queue
+            exchange: feb.message.exchange
+            routingKey: feb.message_assign-user.routing_key
+
+  restclients:
+    #Consulta a watchlist
+    - name: FIND_INFORMATION_WATCHLIST
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/information/{watchlistId}/{originType}
+      method: GET
+    - name: GET_BNK_NAME
+      controller: feb-catalogs
+      path: /api/v1/catalogs/institutions/BNK/{originNode}
+      method: GET
+    - name: GET_MESSAGES_CONVERSATION
+      controller: feb-message-proc
+      path: /api/v1/message/conversations/{conversationId}/messages
+      method: GET
+    - name: GET_FILE
+      controller: feb-message-proc
+      path: /api/v1/message/files/{fileId}
+      method: GET
+    - name: GET_CONVERSATION_BY_HIT
+      controller: feb-message-proc
+      path: /api/v1/message/conversation
+      method: POST
+    - name: GET_CONVERSATION_BY_ID
+      controller: feb-message-proc
+      path: /api/v1/message/conversation/{conversationId}
+      method: GET
+    - name: GET_ANONYMITY
+      controller: feb-message-proc
+      path: /api/v1/message/conversation/anonymity/{conversationId}
+      method: GET
+    - name: GET_CONVERSATIONS
+      controller: feb-message-proc
+      path: /api/v1/message/filter-conversations
+      method: POST
+    - name: VALIDATE_CONVERSATION_STATUS
+      controller: feb-catalogs
+      path: /api/v1/catalogs/message-status/validate-conversation/{businessKey}
+      method: GET
+    - name: GET_FILE_BYTES
+      controller: feb-sftp
+      path: /api/v1/sftp/download
+      method: POST
+    - name: GET_NOTIFICATIONS
+      controller: feb-message-proc
+      path: /api/v1/message/notifications/{operationArea}
+      method: GET        
+
+
+
+nodo: 40012
+
+jwt:
+  secret: $Pasdwew45sdf      
+

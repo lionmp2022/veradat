@@ -1,0 +1,91 @@
+spring:
+  application:
+    name: feb-folio-proc
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+  hikari:
+    maxLifetime: 900000
+    idleTimeout: 600000
+    connection-timeout: 20000
+    auto-commit: false
+    maximum-pool-size: 5
+    minimum-idle: 5
+  jpa:
+    properties:
+      hibernate:
+        order-inserts: true
+        order-updates: true
+        jdbc:
+          batch_size: 1000
+          fetch_size: 1000
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+
+
+### Configuracion que no debe ir en el configuration service
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FFP
+  security:
+    permissions:
+      disabled: false
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      output:
+        queues:
+          - name: feb.watch-list_generated-folio.queue
+            exchange: feb.watch-list.exchange
+            routingKey: feb.watch-list_generated-folio.routing_key
+          - name: feb.enquery_return-enquery-folio.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_return-enquery-folio.routing_key
+      input:
+        fraud-queue: feb.watch-list_folio-proc-fraud.queue
+        laud-queue: feb.watch-list_folio-proc-moneylaundering.queue
+        enquiry-queue: feb.enquery_create-enquery-folio.queue
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 3
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+

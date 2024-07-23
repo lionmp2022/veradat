@@ -1,0 +1,109 @@
+
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check ## Enables health chech review
+      health-check:
+        refetch-instances: true
+        repeat-health-check: false
+        interval: 30s
+        path:
+          default: /veradat-actuator
+      retry:
+        enable: true ## This flag enable the retries of load balancer api gateway
+      cache:
+        enabled: false ## This flag will enable/disable api gateway cache
+        ttl: 30
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedHeaders: "*"
+            allowedMethods:
+            - GET 
+            - POST
+            - PUT
+            - DELETE
+            - PATCH
+      discovery:
+        locator:
+          enabled: true
+          lowerCaseServiceId: true
+          
+management:
+  endpoint:
+    gateway:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,gateway
+
+jwt:
+   secret: $Pasdwew45sdf
+
+veradat:
+   resources:
+      restClients:
+      -  name: API_AUTHENTICATE
+         controller: veradat-feb-node-users-security
+         path: /api/v1/sec/authenticate
+         method: POST
+      ## External Alerts
+      apiClients:
+      ## Security
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/account/config/administration
+         method: POST
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/account/activation
+         method: POST
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/area/{areaBK}
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/areas
+         method: GET  
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/sec/authenticate
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /login
+      ## Configuration
+      -  invoker: feb-external-cfg-orq
+         path: /api/v1/cfg/node/history/records/counter
+         method: GET
+      -  invoker: feb-external-cfg-orq
+         path: /api/v1/cfg/node
+         method: PUT
+      -  invoker: feb-external-cfg-orq
+         path: /api/v1/cfg/node
+         method: POST
+      ## Alerts 
+      -  invoker: feb-external-alerts-orq
+         path: /api/v1/alerts/receive
+         method: POST
+      ## External message
+      -  invoker: feb-external-message-orq
+         path: /api/v1/message
+         method: POST
+      -  invoker: feb-external-message-orq
+         path: /api/v1/message/files
+         method: POST
+      -  invoker: feb-external-message-orq
+         path: /api/v1/message/status
+         method: POST
+      -  invoker: feb-external-message-orq
+         path: /api/v1/message/anonymity
+         method: PUT
+      -  invoker: feb-external-message-orq
+         path: /api/v1/message/keyName
+         method: PUT
+      ## Enquery   
+      -  invoker: feb-enquery-external-orq
+         path: /watchlist/enquery
+         method: POST
+      -  invoker: feb-enquery-external-orq
+         path: /enquery/details
+         method: PUT

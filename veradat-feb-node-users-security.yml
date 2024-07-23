@@ -1,0 +1,258 @@
+
+spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: veradat-feb-node-security-grant-proc,veradat-feb-node-security-users-proc,feb-cfg-proc
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: INFO
+    org.hibernate: ERROR
+    com.veradat.common.sync.output.adapter.webclient: ERROR
+    org.springframework.web.reactive.function.client: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+
+
+veradat:
+  rest:
+    #Generales
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 10
+    initialRateLimit: 5
+    timeout: 50000 #timeout para las respuesta del server
+    responseTime_ms: 20000 # especifica el tiempo promedio en que se espera la respuesta del servidor
+    conn_timeout: 15000
+    request_max_avg: 10    
+    request_max_pending_on_queue: 100    
+    request_pending_on_queue_timeout_ms: 10000
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/key
+  restclients:
+    - name: GET_USER_BY_EMAIL
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/details/email
+      method: POST
+      external: false
+    - name: GET_API_KEY_AUTH
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/node
+      method: POST
+      external: false
+    - name: GET_PREAUTHORIZED_USER
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/details/preauthorized
+      method: POST
+      external: false
+    - name: VALIDATE_MAIL_DOMAIN
+      controller: feb-cfg-proc
+      path: /api/v1/cfg/domains
+      method: GET
+      external: false
+    - name: VALIDATE_USER_BY_MAIL
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/validate/email
+      method: POST
+      external: false
+    - name: GET_GROUP_PERMISSIONS
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/groups/permissions
+      method: POST
+      external: false
+    - name: VALIDATE_STATUS_USER
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/validate/status
+      method: POST
+    - name: GET_BASE_PERMISSIONS
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/permission/base
+      method: GET
+      external: false
+    - name: TRANSLATE_PERMISSIONS
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/permission/validate/tech
+      method: POST
+      external: false
+
+
+  resources:
+    redis:
+      database: 0
+      lockTime: 5000
+      tryLockTime: 6000
+    patterns:
+      email: '^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'
+  security:
+    external:
+      saml2:
+        auth:
+          attr:
+            identifier: http://schemas.microsoft.com/identity/claims/objectidentifier
+            dispName: http://schemas.microsoft.com/identity/claims/displayname
+            emailAddress: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+            emailPhone: http://schemas.xmlsoap.org/ws/2005/05/identity/claims/phone
+            group: http://schemas.microsoft.com/ws/2008/06/identity/claims/role
+          allowedGroups:
+          - providerRole: veradat-feb-node-admin
+            secGroup: FBADM
+            secArea: N/A
+          - providerRole: veradat-feb-node-ana-rh
+            secGroup: FBRRH
+            secArea: N/A
+          - providerRole: veradat-feb-node-tec
+            secGroup: FBTEC
+            secArea: N/A
+          - providerRole: veradat-feb-node-spv-ml
+            secGroup: FBSPV
+            secArea: ENLV
+          - providerRole: veradat-feb-node-spv-fp
+            secGroup: FBSPV
+            secArea: ENPF
+          - providerRole: veradat-feb-node-spv-all
+            secGroup: FBSPV
+            secArea: ENAL
+          - providerRole: veradat-feb-node-ana-ml
+            secGroup: FBANA
+            secArea: ENLV
+          - providerRole: veradat-feb-node-ana-fp
+            secGroup: FBANA
+            secArea: ENPF
+          - providerRole: veradat-feb-node-ana-all
+            secGroup: FBANA
+            secArea: ENAL
+          request:
+            timeToLive: 120 
+    key:
+      hmcKey: "PasswordSampleHCIM"
+    token:
+      timeout: 5
+      apikey:
+        timeout: 5
+      massive:
+        timeout: 60
+    expiry:
+      gracePeriod: 10
+    authentication: internal
+    allowedServices:
+      internal:
+      - "/api/v1/sec/authenticate**"
+      - "/api/v1/sec/internal/authenticate**"
+      - "/api/v1/security/encode**"
+      - "/api/v1/account/activate**"
+      - "/api/v1/security/pass/generate/**"
+      - "/api/v1/security/token/refresh"
+      - "/api/v1/login"
+      - "/api/v1/external/login"
+      - "/api/v1/logout"
+      - "/swagger-ui/index.html"
+      - "/veradat-actuator**"
+      - "/veradat-actuator/**"
+      external:
+      - "/veradat-actuator**"
+      - "/veradat-actuator/**"
+      - "/saml2/sso/azure"
+      - "/saml2/sso**"
+      - "/error**"
+      - "/error/**"
+    internal:
+      servicePrefix: /api/v1/**
+  broker-messages:
+    global:
+      reprocessQueue: veradat.general_reprocess.queue
+      dlqQueue: veradat.general_dlq.queue
+      securityEventQueue: veradat.security_event.queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: veradat.general_reprocess.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: veradat.general_dlq.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: veradat.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      output:
+        queues:
+        - name: vdt_security_session-history-user_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_session-history-user.routingkey
+        - name: vdt_security_account-register-external_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_account-register-external.routingkey
+        - name: vdt_security_update-user_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_update-user_queue.routingkey
+        constants:
+          queues:
+            session-history-user: vdt_security_session-history-user_queue
+            register-external-user: vdt_security_account-register-external_queue
+            update-user: vdt_security_update-user_queue
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  messages:
+    validation:
+      not-null: "El dato es requerido"
+      not-empty: "El dato no puede ir vacío"
+      not-blank: "El dato no puede ir vacío"

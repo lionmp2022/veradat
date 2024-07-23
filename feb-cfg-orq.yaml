@@ -1,0 +1,99 @@
+
+spring:  
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-cfg-proc,feb-catalogs
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+### Configuracion que no debe ir en el configuration service
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FCO
+  rest:
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 30
+    initialRateLimit: 15
+    timeout: 50000
+    responseTime_ms: 10000
+    conn_timeout: 20000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+    crt: /etc/crt
+    key: /etc/key
+
+  restClients:
+    - name: GET-NODE
+      controller: feb-cfg-proc
+      path: /api/v1/cfg/node
+      method: GET
+      external: false
+    - name: GET-CATALOGS
+      controller: feb-catalogs
+      path: /api/v2/catalogs?operationArea={operationArea}&includeItems={includeItems}
+      method: GET
+      external: false
+    - name: GET-CATALOG
+      controller: feb-catalogs
+      path: /api/v2/catalog/{catalogName}?includeItems={includeItems}
+      method: GET
+      external: false
+    - name: GET-CATALOG-ITEMS
+      controller: feb-catalogs
+      path: /api/v2/catalog/{catalogName}/items
+      method: GET
+      external: false
+    - name: GET-CATALOG-ITEM
+      controller: feb-catalogs
+      path: /api/v2/catalog/{catalogName}/item/{businessKey}?versionDate={versionDate}
+      method: GET
+      external: false
+  security:
+    permissions:
+      disabled: false

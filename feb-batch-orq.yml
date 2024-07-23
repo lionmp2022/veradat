@@ -1,0 +1,264 @@
+spring:
+  servlet:
+      multipart:
+        max-file-size: 20MB
+        max-request-size: 20MB
+  data:
+    redis:
+      repositories:
+        enabled: false
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-sftp,feb-batch-process-proc,veradat-feb-node-users-security
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+jwt:
+  secret: $Pasdwew45sdf
+   
+veradat:
+  microserviceId: FBO
+  resources:
+    redis:
+      lockTime: 10000
+      tryLockTime: 15000
+  rest:
+    #Generales
+    client: webclient #parametros válidos [webclient,httpClient,restclient]
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 10
+    initialRateLimit: 5
+    timeout: 50000 #timeout para las respuesta del server
+    responseTime_ms: 10000 # especifica el tiempo promedio en que se espera la respuesta del servidor
+    conn_timeout: 15000
+    response_limit_size: 11156852
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/key
+  constants:
+    refresh-time: 20
+    num-rows-chunk: 50000
+    num-rows-fragment: 5000
+    seconds-to-close: 5
+    pooling-threshold: 80
+    token-time: 60
+  restclients:
+    - name: GET_REPORT
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/report/{batchProcessId}
+      method: GET
+      external: false
+    - name: GET_DB_FILES
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/{businessProcess}/{chargeType} 
+      method: GET
+      external: false
+    - name: OBTAIN_SFTP_FILES
+      controller: feb-sftp
+      path: /api/v1/sftp/files
+      method: POST
+      external: false
+    - name: GET_LAST_PROCESS
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/last
+      method: POST
+      external: false
+    - name: GET_ROWS
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/rows/{businessProcess}/{batchFragmentId}
+      method: GET
+      external: false
+    - name: GET_PROCESS
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/{batchProcessId}
+      method: GET
+      external: false
+    - name: GET_FRAGMENT
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/fragment/{batchFragmentId}
+      method: GET
+      external: false
+    - name: REFRESH_TOKEN
+      controller: veradat-feb-node-users-security
+      path: /api/v1/sec/internal/authenticate
+      method: POST
+      external: false
+    - name: GET_CHUNKS
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/chunks
+      method: POST
+      external: false
+    - name: GET_FRAGMENTS
+      controller: feb-batch-process-proc
+      path: /api/v1/batch/process/fragments
+      method: POST
+      external: false
+
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      input:
+        queues:
+          process-persisted: feb.batch_process-registered.queue
+          register-chunk: feb.batch_file-chunked.queue
+          process-chunk: feb.batch_delay-process.queue
+          chunk-cache-uploaded: feb.batch_chunk-cache-uploaded.queue
+          chunk-persisted: feb.batch_chunk-registered.queue
+          chunk-bulked: feb.batch_chunk-bulked.queue
+          chunk-fragmented: feb.batch_chunk-fragmented.queue
+          receive-row-result: feb.batch_national-processed.queue
+          file-uploaded: feb.batch_charged-file-result.queue
+          process-fragment: feb.batch_delay-fragment.queue
+          receive-watchlist-response: feb.batch-wl_processed.queue
+          close-fragment: feb.batch_close-fragment.queue
+      output:
+        queues:
+          - name: feb.batch_register-process.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_register-process.routing_key
+
+          - name: feb.batch_chunk-file.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_chunk-file.routing_key
+
+          - name: feb.batch_register-chunk.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_register-chunk.routing_key
+
+          - name: feb.batch_chunk-upload.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_chunk-upload.routing_key
+          - name: feb.batch_update-process-status.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_update-process-status.routing_key
+
+          - name: feb.batch_bulk-chunk.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_bulk-chunk.routing_key
+
+          - name: feb.batch_fragment-chunk.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_fragment-chunk.routing_key
+
+          - name: feb.batch_process-national.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_process-national.routing_key
+
+          - name: feb.batch_update-fragment-status.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_update-fragment-status.routing_key
+
+          - name: feb.batch_row-result.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_row-result.routing_key
+
+          - name : feb.general_sftp-upload-file.queue
+            exchange: feb.batch-general.exchange
+            routingKey: feb.general_sftp-upload-file.routing_key
+
+          - name: feb.batch_delay-fragment.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_delay-fragment.routing_key
+
+          - name: feb.batch_process-national-enquery.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_process-national-enquery.routing_key
+
+          - name: feb.batch-wl_process-client.queue
+            exchange: feb.batch-wl.exchange
+            routingKey: feb.batch-wl_process-client.routing_key
+
+          - name: feb.batch-wl_processed.queue
+            exchange: feb.batch-wl.exchange
+            routingKey: feb.batch-wl_processed.routing_key
+
+          - name: feb.batch_close-fragment.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_close-fragment.routing_key
+
+
+          - name: feb.batch_clean-rows.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_clean-rows.routing_key
+
+
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        enabled: false
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  security:
+    permissions:
+      disabled: false

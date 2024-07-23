@@ -1,0 +1,143 @@
+
+
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: oracle.jdbc.OracleDriver
+  hikari:
+    maxLifetime: 900000
+    idleTimeout: 600000
+    connection-timeout: 20000
+    auto-commit: false
+    maximum-pool-size: 5
+    minimum-idle: 5
+  jpa:
+    properties:
+      hibernate:
+        order-inserts: true
+        order-updates: true
+        jdbc:
+          batch_size: 1000
+          fetch_size: 1000
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FEP
+  resources:
+    redis:
+      database: 0
+      lockTime: 10000
+      tryLockTime: 20000
+      defaultExpirationTime: 30
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+
+      output:
+        queues:
+          - name: create-enquery-ack
+            queue: feb.enquery_create-enquery-ack.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_create-enquery-ack.routing_key
+          - name: create-enquery-ack-batch
+            queue: feb.enquery_create-enquery-ack-batch.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_create-enquery-ack-batch.routing_key
+
+      input:
+        create-enquery:
+          name: feb.enquery_create-enquery.queue
+          enabled: true
+        create-enquery-batch:
+          name: feb.enquery_create-enquery-batch.queue
+          enabled: true
+        create-enquery-response:
+          name: feb.enquery_create-enquery-response.queue
+          enabled: true
+        create-enquery-response-batch:
+          name: feb.enquery_create-enquery-response-batch.queue
+          enabled: true
+        update-enquery-details:
+          name: feb.enquery_update-enquery-details.queue
+          enabled: true
+        update-enquery-details-batch:
+          name: feb.enquery_update-enquery-details-batch.queue
+          enabled: true
+        update-hit-origin-node-id:
+          name: feb.enquery_update-hit-origin-node-id.queue
+          enabled: true
+        update-enquery:
+          name: feb.enquery_update-enquery.queue
+          enabled: true
+        update-enquery-batch:
+          name: feb.enquery_update-enquery-batch.queue
+          enabled: true
+
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        keyStorePassword: keystorelocal
+        trustStorePassword: keystorelocal
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2

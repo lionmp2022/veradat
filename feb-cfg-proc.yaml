@@ -1,0 +1,102 @@
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    hikari:
+    maxLifetime: 900000
+
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+### Configuracion que no debe ir en el configuration service
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FCP
+  resources:
+    redis:
+      lockTime: 20000
+      tryLockTime: 20000
+      defaultExpirationTime: 720
+
+  security:
+    permissions:
+      disabled: false
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+      output:
+        queues: ## Formato veradat.{dominio_operacion}.{tipo_elemento} Ejemplo {dominio_operacion}=hexagonal_example-out
+      input:
+        queues:
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      output:
+        queues:
+          - name: feb.node-config_send-result.queue
+            exchange: feb.node-config.exchange
+            routingKey: feb.node-config_send-result.routing_key
+      input:
+        node:
+          create: feb.node-config_create.queue
+          update: feb.node-config_update.queue
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2

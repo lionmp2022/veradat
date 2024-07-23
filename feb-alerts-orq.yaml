@@ -1,0 +1,118 @@
+
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-alerts-proc,feb-catalogs
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+
+logging:
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+
+
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FAO
+  rest:
+    #Generales
+    client: webclient #parametros válidos [webclient,httpClient,restclient]
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 100
+    initialRateLimit: 20
+    timeout: 50000 #timeout para las respuesta del server
+    responseTime_ms: 10000 # especifica el tiempo promedio en que se espera la respuesta del servidor
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/key
+  restClients:
+    - name: VALIDATE-PERSON-TYPE
+      controller: feb-catalogs
+      path: /api/v1/catalogs/personTypes/validate/{businessKey}
+      method: GET
+      external: false
+
+    - name: VALIDATE-COUNTRY
+      controller: feb-catalogs
+      path: /api/v1/catalogs/countries/validate/{businessKey}
+      method: GET
+      external: false
+
+    - name: VALIDATE-GENDER
+      controller: feb-catalogs
+      path: /api/v1/catalogs/genders/validate/{businessKey}
+      method: GET
+      external: false
+
+    - name: VALIDATE-POSTAL-CODE
+      controller: feb-catalogs
+      path: /api/v1/catalogs/postalCodes/validate/{country}/{code}
+      method: GET
+      external: false
+
+    - name: VALIDATE-BANK
+      controller: feb-catalogs
+      path: /api/v1/catalogs/institutions/validate/BNK/{code}
+      method: GET
+      external: false
+
+    - name: VALIDATE-GENERATION-AREA
+      controller: feb-catalogs
+      path: /api/v1/catalogs/validate/case_generated_by/{businessKey}
+      method: GET
+      external: false
+
+    - name: GET-ALERTS-HIST
+      controller: feb-alerts-proc
+      path: /api/v1/alerts/history/search
+      method: POST
+      external: false
+
+    - name: GET-NEW-ALERTS
+      controller: feb-alerts-proc
+      path: /api/v1/alerts/new/{crimeType}
+      method: GET
+      external: false
+
+  security:
+    permissions:
+      disabled: false

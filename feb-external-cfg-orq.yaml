@@ -1,0 +1,181 @@
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-cfg-proc,feb-watchlist-proc,feb-privatelist-proc,feb-catalogs
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+### Configuracion que no debe ir en el configuration service
+jwt:
+  secret: $Pasdwew45sdf
+
+centralNode : Veradat
+
+veradat:
+  microserviceId: FECO
+  rest:
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 30
+    initialRateLimit: 15
+    timeout: 20000
+    responseTime_ms: 10000
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+    crt: /etc/crt
+    key: /etc/keyv
+
+  restClients:
+    - name: VALIDATE_NODE
+      controller: feb-catalogs
+      path: /api/v1/catalogs/institutions/validate/BNK/{code}
+      method: GET
+    - name: GET_ALL_STATUS
+      controller: feb-catalogs
+      path: /api/v1/catalogos/cfg/status
+      method: GET
+    - name: GET_All_NODE_TYPE
+      controller: feb-catalogs
+      path: /api/v1/catalogs/{catalogType}
+      method: GET
+    - name: GET_ALL_SERVICES
+      controller: feb-catalogs
+      path: /api/v1/catalogos/cfg/service
+      method: GET
+    - name: GET_COUNT_RECORDS_WL
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/records
+      method: GET
+    - name: GET_COUNT_RECORDS_PL
+      controller: feb-privatelist-proc
+      path: /api/v1/privatelist/originType/all/record/count
+      method: GET
+    - name: GET_ALL_NODES
+      controller: feb-catalogs
+      path: /api/v1/cfg/nodes
+      method: GET
+    - name: VALIDATE_INSTITUTION
+      controller: feb-catalogs
+      path: /api/v1/catalogs/institutions/validate/BNK/{code}
+      method: GET
+    - name: GET-CATALOGS
+      controller: feb-catalogs
+      path: /api/v2/catalogs?operationArea={operationArea}&includeItems={includeItems}
+      method: GET
+      external: false
+    - name: DELETE-CATALOGS-REDIS
+      controller: feb-catalogs
+      path: /api/v2/catalogs/redis/delete
+      method: POST
+      external: false
+    - name: GET_CATALOG_ITEM_LIST
+      controller: feb-catalogs
+      path: /api/v2/catalog/{catalogName}/items
+      method: GET
+      external: false
+  security:
+    permissions:
+      disabled: false
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+      output:
+        queues: ## Formato veradat.{dominio_operacion}.{tipo_elemento} Ejemplo {dominio_operacion}=hexagonal_example-out
+          - create: feb.node-config_create.queue
+          - update: feb.node-config_update.queue
+      input:
+        queues:
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      output:
+        queues:
+          - name: CREATE_NODE
+            queue: feb.node-config_create.queue
+            exchange: feb.node-config.exchange
+            routingKey: feb.node-config_create.routing_key
+          - name: UPDATE_NODE
+            queue: feb.node-config_update.queue
+            exchange: feb.node-config.exchange
+            routingKey: feb.node-config_update.routing_key
+          - name: SEND_RESULT
+            queue: feb.node-config_send-result.queue
+            exchange: feb.node-config.exchange
+            routingKey: feb.node-config_send-result.routing_key
+          - name: VERADAT-NODE-CFG-SAVE-CATALOG-ITEM
+            queue: feb.node-config_save-catalog-item.queue
+            exchange: feb.node-config.exchange
+            routingKey: feb.node-config_save-catalog-item.routing_key
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2

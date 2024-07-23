@@ -1,0 +1,54 @@
+
+
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+  hikari:
+  maxLifetime: 900000
+  jpa:
+    show-sql: true
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+
+veradat:
+  resources:
+    redis:
+      timeToLive: 720
+      lockTime: 5000
+      tryLockTime: 6000

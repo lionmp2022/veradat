@@ -1,0 +1,49 @@
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+### Configuracion que no debe ir en el configuration service
+jwt:
+  secret: $Pasdwew45sdf
+
+
+veradat:
+  microserviceId: FPKP
+  security:
+    permissions:
+      disabled: true
+  jks:
+    file: /mnt/veradat-feb-node/security/privatekey/veradat-feb-node.jks
+    keystore-password: veradat1
+    key-password: veradat1
+    key-alias: private_key1  

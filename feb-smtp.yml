@@ -1,0 +1,95 @@
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+jwt:
+  secret: $Pasdwew45sdf
+   
+veradat:
+  microserviceId: FSMTP
+  rest:
+    #Generales
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 30
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+    initialRateLimit: 15
+    timeout: 12000 #timeout para las respuesta del server
+    responseTime_ms: 5000 # especifica el tiempo promedio en que se espera la respuesta del servidor
+    conn_timeout: 15000
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/key
+  restClients:
+  - name: GET_GRAPH_AUTH
+    controller: https://login.microsoftonline.com
+    method: POST
+    external: true
+  - name: GET_GRAPH_MAIL
+    controller: https://graph.microsoft.com
+    method: GET
+    external: true
+  
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      input:
+        queues:
+          send-mail: feb.general_smtp-send-mail.queue
+      output:
+        queues:
+         
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 3
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  security:
+    permissions:
+      disabled: true
+  resources:
+    notificationTesting:
+      enabled: true
+      mail: asantana@veradat.com

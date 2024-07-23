@@ -1,0 +1,234 @@
+spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-watchlist-proc,feb-case-proc,feb-enquery-proc
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+
+logging:
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FEP
+  rest:
+    #Generales
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 10
+    initialRateLimit: 5
+    timeout: 50000 #timeout para las respuesta del server
+    responseTime_ms: 10000 # especifica el tiempo promedio en que se espera la respuesta del servidor
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100 
+    request_pending_on_queue_timeout_ms: 10000 
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/key
+
+  resources:
+    redis:
+      database: 0
+      lockTime: 10000
+      tryLockTime: 20000
+      defaultExpirationTime: 30
+
+ 
+  errors:
+    internal-error: Ocurrio un error interno, pior favor consulte con el administrador de sistema
+
+  broker-messages:    
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      output:
+        queues:
+          - name: return-enquery-details
+            queue: feb.enquery_return-enquery-details.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_return-enquery-details.routing_key
+          - name: return-enquery-details-batch
+            queue: feb.enquery_return-enquery-details-batch.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_return-enquery-details-batch.routing_key
+          - name: requeue-enquery
+            queue: feb.enquery_requeue-enquery.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_requeue-enquery.queue.routing_key
+          - name: requeue-enquery-batch
+            queue: feb.enquery_requeue-enquery-batch.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_requeue-enquery-batch.routing_key
+          - name: update-enquery-details
+            queue: feb.enquery_update-enquery-details.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_update-enquery-details.routing_key
+          - name: update-enquery-details-batch
+            queue: feb.enquery_update-enquery-details-batch.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_update-enquery-details-batch.routing_key
+          - name: create-process
+            queue: feb.traceability_create-process.queue
+            exchange: feb.traceability.exchange
+            routingKey: feb.traceability_create-process.routing_key
+          - name: create-case
+            queue: feb.transversal_create-case.queue
+            exchange: feb.transversal.exchange
+            routingKey: feb.transversal_create-case.routing_key
+          - name: create-case-batch
+            queue: feb.transversal_create-case-batch.queue  
+            exchange: feb.transversal.exchange  
+            routingKey: feb.transversal_create-case-batch.routing_key
+          - name: requeue-case
+            queue: feb.enquery_requeue-case.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_requeue-case.queue.routing_key
+          - name: requeue-case-batch
+            queue: feb.enquery_requeue-case-batch.queue  
+            exchange: feb.enquery.exchange  
+            routingKey: feb.enquery_requeue-case-batch.routing_key
+          - name: update-enquery
+            queue: feb.enquery_update-enquery.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_update-enquery.routing_key
+          - name: update-enquery-batch
+            queue: feb.enquery_update-enquery-batch.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_update-enquery-batch.routing_key
+
+      input:
+        queues:
+          requeue-case:
+            name: feb.enquery_requeue-case.queue
+            enabled: true
+          requeue-case-batch:
+            name: feb.enquery_requeue-case-batch.queue
+            enabled: true
+          requeue-enquery:
+            name: feb.enquery_requeue-enquery.queue
+            enabled: true
+          requeue-enquery-batch:
+            name: feb.enquery_requeue-enquery-batch.queue
+            enabled: true
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+
+  restclients:
+    - name: ENQUERY-NATIONAL
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/national
+      method: POST
+      external: false
+
+    - name: ENQUERY-FOREIGN
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/foreign
+      method: POST
+      external: false
+
+    - name: ENQUERY-ESCROW
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/escrow
+      method: POST
+      external: false
+
+    - name: ENQUERY-GENERATION-DETAILS
+      controller: feb-enquery-proc
+      path: /api/v1/enquery/generation-details/{enqueryNodeId}
+      method: GET
+      external: false
+
+    - name: SEARCH-COUNT
+      controller: feb-enquery-proc
+      path: /api/v1/enquery/search-count
+      method: POST
+      external: false
+
+    - name: GET-EXISTING-CASES
+      controller: feb-case-proc
+      path: /api/v1/cases
+      method: POST
+      external: false
+
+    - name: GET-ENQUERY-RESULTS
+      controller: feb-enquery-proc
+      path: /api/v1/watchlist/enquery/{enqueryId}
+      method: GET
+      external: false
+
+
+

@@ -1,0 +1,100 @@
+
+spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+
+jwt:
+  secret: $Pasdwew45sdf
+   
+veradat:
+  microserviceId: FSFTP
+  resources:
+    redis:
+      defaultExpirationTime: 720
+  sftp:
+    remoteBasePath: /veradat/
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      input:
+        queues:
+          upload-file: feb.general_sftp-upload-file.queue
+          chunk-file: feb.batch_chunk-file.queue
+          save-chunk-cache: feb.batch_chunk-upload.queue
+      output:
+        queues:
+          - name: feb.batch_file-chunked.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_file-chunked.routing_key
+          - name: feb.batch_chunk-cache-uploaded.queue
+            exchange: feb.batch.exchange
+            routingKey: feb.batch_chunk-cache-uploaded.routing_key
+
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  security:
+    permissions:
+      disabled: false

@@ -1,0 +1,96 @@
+
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+  hikari:
+    maxLifetime: 900000
+    idleTimeout: 600000
+    connection-timeout: 20000
+    auto-commit: false
+    maximum-pool-size: 3
+    minimum-idle: 3
+  jpa:
+    properties:
+      hibernate:
+        order-inserts: true
+        order-updates: true
+        jdbc:
+          fetch_size: 1000
+
+logging:
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    db:
+      enabled: true
+
+jwt:
+  secret: $Pasdwew45sdf
+
+veradat:
+  microserviceId: FCP
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      exchange: rabbitmq.exchange
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      routingkey: rabbitmq.routingkey
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      input:
+        queues:
+          create-case: feb.transversal_create-case.queue
+          update-status: feb.transversal_update-case-status.queue
+          assign-user: feb.transversal_update-case-user.queue
+          create-case-batch: feb.transversal_create-case-batch.queue
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        enabled: false
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+

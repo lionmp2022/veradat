@@ -1,0 +1,237 @@
+
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-privatelist-proc,feb-catalogs
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+
+jwt:
+  secret: $Pasdwew45sdf 
+
+
+
+veradat:
+  microserviceId: FPO
+  rest:
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 30
+    initialRateLimit: 15
+    timeout: 50000
+    responseTime_ms: 10000
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+    crt: /etc/crt
+    key: /etc/keyv
+  restclients:
+    - name: VALIDATE_NATIONALS
+      controller: feb-privatelist-proc
+      path: /api/v1/privatelist/national/validate
+      method: POST
+    - name: FIND_NATIONALS
+      controller: feb-privatelist-proc
+      path: /api/v1/privatelist/national/clients
+      method: POST
+    - name: VALIDATE_FOREINGS
+      controller: feb-privatelist-proc
+      path: /api/v1/privatelist/foreign/validate
+      method: POST
+    - name: VALIDATE_ESCROW
+      controller: feb-privatelist-proc
+      path: /api/v1/privatelist/escrow/validate
+      method: POST
+    - name: VALIDATE_COUNTRY
+      controller: feb-catalogs
+      path: /api/v1/catalogs/countries/validate/{codeIso2}
+      method: GET
+    - name: VALIDATE_CPP
+      controller: feb-catalogs
+      path: /api/v1/catalogs/postalCodes/validate/{country}/{code}
+      method: GET
+    - name: VALIDATE_INSTITUTION
+      controller: feb-catalogs
+      path: /api/v1/catalogs/institutions/validate/BNK/{code}
+      method: GET
+    - name: VALIDATE_BATCH_DUPLICATES
+      controller: feb-privatelist-proc
+      path: /api/v1/privatelist/national/batch/action/duplicateReview
+      method: POST
+  security:
+    permissions:
+      disabled: false
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+      output:
+        queues: ## Formato veradat.{dominio_operacion}.{tipo_elemento} Ejemplo {dominio_operacion}=hexagonal_example-out
+          - example-out: veradat.hexagonal_example-out.queue
+          - example2-out: veradat.hexagonal_example2-out.queue
+          - example3-out: veradat.hexagonal_example3-out.queue
+      input:
+        queues:
+          create:
+            example-in: veradat.hexagonal_example-in.queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      output:
+        queues:
+        - name: feb.private-list_create-national.queue
+          exchange: feb.private-list.exchange
+          routingKey: feb.private-list_create-national.routing_key
+        - name: feb.private-list_create-foreign.queue
+          exchange: feb.private-list.exchange
+          routingKey: feb.private-list_create-foreign.routing_key
+        - name: feb.private-list_create-escrow.queue
+          exchange: feb.private-list.exchange
+          routingKey: feb.private-list_create-escrow.routing_key
+        - name: feb.private-list_delete-client-national.queue
+          exchange: feb.private-list.exchange
+          routingKey: feb.private-list_delete-client-national.routing_key
+        - name: feb.private-list_delete-client-foreign.queue
+          exchange: feb.private-list.exchange
+          routingKey: feb.private-list_delete-client-foreign.routing_key
+        - name: feb.private-list_delete-client-escrow.queue
+          exchange: feb.private-list.exchange
+          routingKey: feb.private-list_delete-client-escrow.routing_key
+        - name: feb.batch_national-processed.queue
+          routingKey: feb.batch_national-processed.routing_key
+          exchange: feb.batch.exchange
+        - name: feb.private-list_save-batch-national.queue
+          routingKey: feb.private-list_save-batch-national.routing_key
+          exchange: feb.batch-private-list.exchange
+      input:
+        queues:
+          national-batch: feb.batch_process-national.queue
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+
+  messages:
+    validation:
+      not-null: El dato es requerido
+      not-empty: El dato no puede ir vacío
+      min-size: No tiene la longitud mínima permitida
+      max-size: Excede la longitud máxima permitida
+  errors:
+    malformed-data: Los datos proporcionados no pudieron procesarse
+    internal-error: Ocurrio un error interno, pior favor consulte con el administrador de sistema
+    invalid-rfc: El rfc no tiene un formato válido
+    invalid-curp: El curp no tiene un formato válido
+    duplicated-record: El registro que intenta dar de alta ya se encuentra registrado
+    not-macth-rfc-crup: No coincide el RFC y el CURP
+    rfc-or-curp: Se debe ingresar al menos el rfc o el curp
+    rfc-required: El rfc es necesario
+    curp-required: El curp es necesario
+    national-validation-error: Error al validar el cliente nacional
+    foreign-validation-error: Error al validar el cliente foraneo
+    escrow-validation-error: Error al validar el fideicomiso
+    nationality-error: Error al intentar validar la nacionalidad
+    clients-consult-error: Error al intentar consultar clientes
+    nacionality-invalid: La nacionalidad no es correct
+    person-type-not-null: Es requerido el tipo de persona
+    person-type-not-empty: El tipo de persona no tiene formato válido
+    person-type-size: La longitud maxima de personType permitida es 50
+  foreign:
+    gender: Gender field must correspong to a valid gender ID
+    postal-code-moral-person: Postal code must be empty for physical persons
+    postal-code-empty: postal code must not be empty for moral persons
+    postal-code-not-valid: Postal code does not exist for given country
+    country-not-valid: Country field must correspond to a valid Country ID
+    country-mexico: Country of a foreign entry cannot be Mexico
+    invalid-type: Person type must correspond to a valid person type id
+    physical-validation: For a physical person an a valid gender must be provided and no postal code must be given
+    moral-validation: For foreign moral persons gender must be 0 and postal code at least 1 character
+    bad-person-type: Foreign watchList entries only accepts physical or moral persons as person type
+  national:
+    match: First 10 characters of CURP and RFC fields must match
+    both-fields-null: For national watchList entry either or RFC or CURP fields must be valid
+    rfc: RFC must follow the valid format
+    curp: CURP must follow the valid format
+    rfc-mandatory: For a physical person with business activity a valid rfc must be entered
+    moral-curp: For moral person or government entity only a valid rfc must be entered
+    escrow-type: Escrow type can only be processed trough an escrow entry
+    invalid-type: Person type must correspond to a valid person type id
+  escrow:
+    country: Country field must correspond to Mexico for national type of first truster, or correspond to any other valid Country ID for other type of first truster
+    rfc-not-found: RFC field is mandatory and must follow the allowed format for national first truster
+    rfc-bad-format-physical: RFC field must be 13 characters for physical or physical with business activity first truster type
+    rfc-bad-format-moral: RFC field must be 12 characters for moral or government first truster type
+    rfc-exists-foreign: RFC field is mandatory for national first trusters, and must be empty for foreign first trusters
+    trust-bank: Trust bank must correspond to a valid bank id
+    gender: Gender field must be 0 for national type of truster, otherwise it must correspond to a valid gender id
+    postal-code: Postal code must be empty for national or foreign moral person type of first truster, or must follow the allowed format for foreign physical first truster
+    first-truster-invalid: Invalid first truster type
+    first-truster-government: For truster type Government country must correspond to Mexico
+    first-truster-escrow: First truster cannot be another escrow

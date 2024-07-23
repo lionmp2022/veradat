@@ -1,0 +1,292 @@
+
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-watchlist-proc,feb-cfg-proc,feb-groups-perms-proc,feb-catalogs
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+
+jwt:
+  secret: $Pasdwew45sdf
+
+
+#loggers configuration
+
+veradat:
+  microserviceId: FWO
+  rest:
+    #Generales
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 30
+    initialRateLimit: 15
+    timeout: 50000
+    responseTime_ms: 10000
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100 	
+    request_pending_on_queue_timeout_ms: 10000
+    crt: /etc/crt
+    key: /etc/key
+
+  security:
+    permissions:
+      disabled: false
+  broker-messages:
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      exchange: rabbitmq.exchange
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      routingkey: rabbitmq.routingkey
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      output:
+        queues:
+          - name: FOLIO-PROC-MONEYLAUNDERING
+            queue: feb.watch-list_folio-proc-moneylaundering.queue
+            exchange: feb.watch-list.exchange
+            routingKey: feb.watch-list_folio-proc-moneylaundering.routing_key
+          - name: FOLIO-PROC-FRAUD
+            queue: feb.watch-list_folio-proc-fraud.queue
+            exchange: feb.watch-list.exchange
+            routingKey: feb.watch-list_folio-proc-fraud.routing_key
+          - name: SAVE-NATIONAL
+            queue: feb.watch-list_save-national.queue
+            exchange: feb.watch-list.exchange
+            routingKey: feb.watch-list_save-national.routing_key
+          - name: SAVE-FOREIGN
+            queue: feb.watch-list_save-foreign.queue
+            exchange: feb.watch-list.exchange
+            routingKey: feb.watch-list_save-foreign.routing_key
+          - name: SAVE-ESCROW
+            queue: feb.watch-list_save-escrow.queue
+            exchange: feb.watch-list.exchange
+            routingKey: feb.watch-list_save-escrow.routing_key
+          - name: SEND-ALERT
+            queue: feb.alerts_send.queue
+            exchange: feb.alerts.exchange
+            routingKey: feb.alerts_send.routing_key
+          - name: PROCESSED-BATCH
+            queue: feb.batch-wl_processed.queue
+            exchange: feb.batch-wl.exchange
+            routingKey: feb.batch-wl_processed.routing_key
+      input:
+        queues:
+          generated-folio: feb.watch-list_generated-folio.queue
+          receive-batch-request: feb.batch-wl_process-client.queue
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  restclients:
+    - name: VALIDATE_BANK
+      controller: feb-catalogs
+      path: /api/v1/catalogs/institutions/validate/BNK/{BUSINESS_KEY}
+      method: GET
+      external: false
+    - name: VALIDATE_CRIMETYPE
+      controller: feb-catalogs
+      path: /api/v1/catalogs/crimeTypes/validate/{BUSINESS_KEY}
+      method: GET
+      external: false
+    - name: VALIDATE_CATALOG
+      controller: feb-catalogs
+      path: /api/v1/catalogs/validate/{CATALOG_TYPE}/{BUSINESS_KEY}
+      method: GET
+      external: false
+    - name: VALIDATE_PERSONTYPE
+      controller: feb-catalogs
+      path: /api/v1/catalogs/personTypes/validate/{BUSINESS_KEY}
+      method: GET
+      external: false
+    - name: VALIDATE_GENDER
+      controller: feb-catalogs
+      path: /api/v1/catalogs/genders/validate/{BUSINESS_KEY}
+      method: GET
+      external: false
+    - name: VALIDATE_POSTALCODE
+      controller: feb-catalogs
+      path: /api/v1/catalogs/postalCodes/validate/{COUNTRY_CODE}/{POSTAL_CODE}
+      method: GET
+      external: false
+    - name: VALIDATE_COUNTRY
+      controller: feb-catalogs
+      path: /api/v1/catalogs/countries/validate/{CODE_ISO2}
+      method: GET
+      external: false
+    #feb-watchlist-orq para solicitar los registros de nacionales
+    - name: GET_NATIONAL
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/feb/single/getnational
+      method: POST
+      external: false
+    - name: GET_SERVICES
+      controller: feb-cfg-proc
+      path: /api/v1/cfg/services
+      method: GET
+      external: false
+
+    #feb-watchlist-orq para solicitar los registros de extranjeros
+    - name: GET_FOREIGN
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/feb/single/getforeign
+      method: POST
+      external: false
+
+    #feb-watchlist-orq para solicitar los registros de fideicomisos
+    - name: GET_ESCROW
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/feb/single/getescrow
+      method: POST
+      external: false
+
+    #feb-watchlist-orq para solicitar los registros por rango de fecha
+    - name: GET_BY_DATE_RANGE
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/feb/getbydaterange
+      method: POST
+      external: false
+
+    - name: VALIDATE-AREA
+      controller: feb-groups-perms-proc
+      path: /api/v1/areas/businessKey
+      method: POST
+      external: false
+
+    - name: VALIDATE-GENERATION-AREA
+      controller: feb-catalogs
+      path: /api/v1/catalogs/validate/case_generated_by/{businessKey}
+      method: GET
+      external: false
+
+    #Verificar si un hashCode ya existe en la watchlist
+    - name: REQUEST_HASH
+      controller: feb-watchlist-proc
+      path: /api/v1/watchlist/feb/hashcode?hashCode={hashCode}&originType={originType}
+      method: GET
+      external: false
+
+#messages configuration
+  errors:
+    batch:
+      internal-error: Ocurrio un error interno, por favor consulte con el administrador de sistema
+    watchlist:
+      general:
+        crimeType: Invalid crime type
+        risk: Invalid risk
+        reportType: Invalid report type
+        typology: Invalid typology
+        entityRelationFraud: Fraud entries must not provide an entity relation
+        entityRelationMoral: Moral and escrow entries must have entity relation of client
+        invalidEntityRelation: Invalid entity relation
+        moneyLaunderingAffected: Money laundering entries must not provide an affected field
+        affected: Invalid affected
+        personType: Invalid person type
+      national:
+        rfcCurpMatch: The first 10 characters of RFC and CURP fields must match
+        rfcCurpNull: A valid RFC or CURP field must be provided
+        rfc: RFC field must follow the rules dictated by RENAPO
+        curp: CURP field must match the rules dictated by RENAPO
+        physicalWithActivityFields: Entries of person type physical with business activity must provide an RFC field
+        moralFields: Moral and government entity entries must provide only a valid RFC field
+        escrow: National entry cannot have person type escrow
+      foreign:
+        moralGender: moral entries must not provide a gender
+        invalidGender: Invalid gender
+        mexico: Foreign entries must provide a country other than Mexico
+        personType: Foreign entries must have person type phyisical, physical with business activity or moral
+        invalidCountry: Invalid country
+        physicalPostalCode: Entries of person type physical or physical with business activity must not provide a postal code
+        invalidPostalCode: InvalidPostalCode
+      escrow:
+        invalidCountry: Invalid country
+        invalidRfc: A valid RFC must be provided
+        physicalRfc: RFC for physical first truster must be 13 character long
+        moralRfc: RFC for moral first truster must be 12 characters long
+        foreignRfc: Entries with foreign first truster must not provide an RFC
+        trusterBank: Invalid truster bank
+        moralGender: Entries with foreign moral first truster must not provide a gender
+        invalidGender: Invalid gender
+        physicalPostalCode: Entries with foreign physical first truster must not provide a postal code
+        invalidPostalCode: Invalid postal code
+        government: First truster must not be of person type government
+        escrow: First truster must not be of person type escrow
+        national-birth-date: National first trusters must not provide a birth/incorporation date
+        null-incorporation-date: Foreign moral first trusters must provide an incorporation date
+        null-birth-date: Foreign physical first trusters must provida a birth date
+    request:
+      titular: Titular entry participation type must be titular
+      government: Entries of type government must not have any linked entries
+      linkedPersonType: Linked entries person types must only be of type physical or physical with business activity
+      linkedType: The linked participation type does not match any of the required for the titular person type
+      rfc: the rfc of the titular entry is repeated in linked entries
+      curp: the rfc of the titular entry is repeated in linked entries

@@ -1,0 +1,211 @@
+
+spring:
+  data:
+    redis:
+      repositories:
+        enabled: false
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-cfg-proc
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+  
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+
+jwt:
+  secret: $Pasdwew45sdf
+   
+
+veradat:
+  microserviceId: FBNR
+  rest:
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 30
+    initialRateLimit: 15
+    timeout: 20000 
+    responseTime_ms: 10000
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100 
+    request_pending_on_queue_timeout_ms: 10000 
+    crt: /etc/crt
+    key: /etc/key
+
+  restclients:
+    - name: SEND_ENQUERY
+      controller: veradat-enquery-orq
+      path: /api/v1/watchlist/enquery
+      method: POST
+      external: true
+    - name: SEND_ENQUERY_DETAILS
+      controller: veradat-enquery-orq
+      path: /api/v1/watchlist/enquery/details
+      method: PUT
+      external: true
+    - name: SEND_ALERT
+      controller: veradat-alerts-orq
+      path: /api/v1/alerts/receive
+      method: POST
+      external: true
+    - name: SEND_KEYNAME_REQUEST
+      controller: veradat-message-orq
+      path: /api/v1/message/key-name
+      method: POST
+      external: true
+    - name: SEND_MESSAGE
+      controller: veradat-message-orq
+      path: /api/v1/message
+      method: POST
+      external: true
+    - name: SEND_FILE
+      controller: veradat-message-orq
+      path: /api/v1/message/file
+      method: POST
+      external: true
+    - name: SEND_ALERT_RESULT
+      controller: veradat-alerts-orq
+      path: /api/v1/alerts/response
+      method: POST
+      external: true
+    - name: SEND_CONVERSATION_STATUS
+      controller: veradat-message-orq
+      path: /api/v1/message/status
+      method: POST
+      external: true
+    - name: SEND_ANONYMITY
+      controller: veradat-message-orq
+      path: /api/v1/message/anonymity
+      method: PUT
+      external: true
+    - name: SEND_CREATED_NODE_RESULT
+      controller: veradat-cfg-orq
+      path: /api/v1/cfg/nodes/feb/result
+      method: POST
+      external: true
+    - name: GET_NODE_INFO
+      controller: feb-cfg-proc
+      path: /api/v1/cfg/node
+      method: GET
+      external: false
+  broker-messages:    
+    global:
+      reprocessQueue: vdt_general_reprocess_queue
+      dlqQueue: vdt_general_dlq_queue
+      securityEventQueue: vdt_security_event_queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: vdt.general_reprocess_queue.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: vdt.general_dlq_queue.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: vdt.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      input:
+        queues:
+          enquery-details:
+            name: feb.enquery_return-enquery-details-batch.queue
+            enabled: true
+          send-enquery:
+            name: feb.enquery_notify-enquery-batch.queue
+            enabled: true
+          send-alert:
+            name: feb.alerts_send.queue
+            enabled: true
+          send-alert-result:
+            name: feb.alerts_send-result.queue
+            enabled: true
+          send-keyname-request:
+            name: feb.message_send-keyname-request.queue
+            enabled: false
+          send-message:
+            name: feb.message_send-message.queue
+            enabled: false
+          send-file:
+            name: feb.message_send-file.queue
+            enabled: false
+          send-status:
+            name: feb.message_send-status.queue
+            enabled: false
+          send-anonymity:
+            name: feb.message_send-anonymity.queue
+            enabled: false
+          send-created-node-result:
+            name: feb.node-config_send-result.queue
+            enabled: false
+      output:
+        queues:
+          - name: create-enquery-response
+            queue: feb.enquery_create-enquery-response.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_create-enquery-response.routing_key
+          - name: create-enquery-response-batch
+            queue: feb.enquery_create-enquery-response-batch.queue
+            exchange: feb.enquery.exchange
+            routingKey: feb.enquery_create-enquery-response-batch.routing_key
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  security:
+    permissions:
+      disabled: false

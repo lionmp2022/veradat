@@ -1,0 +1,295 @@
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: veradat-feb-node-users-security,veradat-feb-node-security-users-proc,veradat-feb-node-security-grant-proc
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
+
+
+logging:
+  #file.name: '/logs/${spring.application.name:}.log'
+  level:
+    root: WARN
+    com.veradat: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
+  pattern:
+    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+    console: '%d %-5level [%thread] [%logger ]: %msg%n'
+    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+
+management:
+  endpoint:
+    logfile:
+      enabled: true
+    health:
+      show-components: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,logfile
+      base-path: /veradat-actuator
+  health:
+    defaults:
+      enabled: false
+    rabbit:
+      enabled: false
+    redis:
+      enabled: true
+
+veradat:
+  rest:
+    #Generales
+    client: webclient
+    validate-certs: true
+    keystore:
+    keystorePassword: notifierqa
+    tlsVersion: TLSv1.2
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
+    times_to_retry_on_error: 3
+    time_to_retry_on_status_error_ms: 3000
+    maxRateLimit: 10
+    initialRateLimit: 5
+    timeout: 50000 #timeout para las respuesta del server
+    responseTime_ms: 20000 # especifica el tiempo promedio en que se espera la respuesta del servidor
+    conn_timeout: 15000
+    request_max_avg: 10
+    request_max_pending_on_queue: 100
+    request_pending_on_queue_timeout_ms: 10000
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/key
+  restClients:
+    - name: GEN_PASS
+      controller: veradat-feb-node-users-security
+      path: /api/v1/security/pass/generate/{length}
+      method: GET
+      external: false
+    - name: GET_USERS
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users
+      method: GET
+      external: false
+    - name: USER_DETAILS
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/details
+      method: POST
+      external: false
+    - name: USER_DETAILS_BY_MAIL
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/details/info/email
+      method: POST  
+      external: false
+    - name: ACCOUNT_USER_STATUS
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/account/status
+      method: GET
+      external: false
+    - name: VALIDATE_ACCOUNT_STATUS
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/account/status/{businessKey}
+      method: GET
+      external: false
+    - name: GET_GROUPS
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/groups
+      method: GET
+      external: false
+    - name: GET_GROUP_PERMISSIONS
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/groups/permissions
+      method: POST
+      external: false
+    - name: PERMS_VALIDATION
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/permission/validate
+      method: POST
+      external: false
+    - name: GET_CRIME_AREAS
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/areas
+      method: GET
+      external: false
+    - name: GET_FUNCTIONAL_CATEGORIES
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/functionalcategories
+      method: GET
+      external: false
+    - name: GROUP_BY_BK
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/groups/businessKey
+      method: POST
+      external: false
+    - name: AREA_BY_BK
+      controller: veradat-feb-node-security-grant-proc
+      path: /api/v1/areas/businessKey
+      method: POST
+      external: false
+    - name: VALIDATE_USER_BY_MAIL
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/validate/email
+      method: POST
+      external: false
+    - name: VALIDATE_USER_UPDATE_PASS
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/validate/pass
+      method: POST
+      external: false
+    - name: GET_AREA_USERS
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/area
+      method: GET
+      external: false
+    - name: GET_USERS_BY_AREA
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/area/{areaBk}
+      method: GET
+      external: false
+    - name: GET_USERS_RESUME
+      controller: veradat-feb-node-security-users-proc
+      path: /api/v1/users/resume
+      method: POST
+      external: false
+    - name: VALIDATE_MAIL_DOMAIN
+      controller: feb-cfg-proc
+      path: /api/v1/cfg/domains
+      method: GET
+      external: false
+  resources:
+    profilesWithoutArea:
+    - FBRRH
+    - FBTEC
+    - FBADM
+    
+    notificationTesting:
+      enabled: true
+      mail: dacosta@veradat.com
+    patterns:
+      email: '^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'
+    notificationTemplates:
+      - name: confirm-administration-initial-set-up
+        template: NFADM
+        subject: "Confirmación de registro de configuración de administración"
+      - name: request-activation-account-mail
+        template: VFUS
+        subject: "Solicitud de activación de cuenta en Plataforma de Prevención de Fraude y Lavado de Dinero" 
+      - name: confirm-activation-account-mail
+        template: NFUS
+        subject: "Confirmación de activación de cuenta en Plataforma de Prevención de Fraude y Lavado de Dinero"
+      - name: request-change-password-mail
+        template: FGPS
+        subject: "Solicitud de cambio de contraseña"
+      - name: confirm-change-pass-account-mail
+        template: CPCF
+        subject: "Confirmación de cambio de contraseña"
+  broker-messages:
+    global:
+      reprocessQueue: veradat.general_reprocess.queue
+      dlqQueue: veradat.general_dlq.queue
+      securityEventQueue: veradat.security_event.queue
+    rabbitmq:
+      general:
+        reprocessRoutingKey: veradat.general_reprocess.routingkey
+        reprocessExchange: veradat.general.exchange
+        dlqRoutingKey: veradat.general_dlq.routingkey
+        dlqExchange: veradat.general.exchange
+        securityEventRoutingKey: veradat.security_event.routingkey
+        securityExchange: veradat.security.exchange
+      input:
+        queues:
+          userActivation: vdt_security_send-request-activation_queue
+          userActivationNotification: vdt_security_send-activation-notification_queue
+          adminActivationNotification: vdt_security_send-admin-activation-notification_queue
+          changePasswordNotification: vdt_security_send-change-pass-account_queue
+      output:
+        queues:
+        - name: feb.general_smtp-send-mail.queue
+          exchange: feb.batch-general.exchange
+          routingKey: feb.general_smtp-send-mail.routing_key
+        - name: vdt_security_create-user_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_create-user.routingkey
+        - name: vdt_security_update-user_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_update-user_queue.routingkey
+        - name: vdt_security_delete-user_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_delete-user.routingkey
+        - name: vdt_security_account-update-user_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt_security_account-update-user.routingkey
+        - name: vdt_security_pass-change-user_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_pass-change-user.routingkey
+        - name: vdt_security_configuration-activate-admin_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_configuration-activate-admin.routingkey
+        - name: vdt_security_account-activate_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_account-activate.routing_key
+        - name: vdt_security_account-activate-token_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_account-activate-token.routing_key
+        - name: vdt_security_account-recovery-pass-token_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.security_account-recovery-pass-token.routing_key
+        - name: vdt_audit_service-execution-history_queue
+          exchange: veradat.security.exchange
+          routingKey: vdt.audit_service-execution-history.routingkey
+
+        constants:
+          queues:
+            send-mail: feb.general_smtp-send-mail.queue
+            send-administration-config: vdt_security_configuration-activate-admin_queue
+            request-activation-account: vdt_security_account-activate_queue
+            request-activation-account-token: vdt_security_account-activate-token_queue
+            request-change-password: vdt_security_pass-change-user_queue
+            request-change-password-token: vdt_security_account-recovery-pass-token_queue
+            request-update-account: vdt_security_account-update-user_queue
+            send-service-history: vdt_audit_service-execution-history_queue
+            create-user: vdt_security_create-user_queue
+            update-user: vdt_security_update-user_queue
+            delete-user: vdt_security_delete-user_queue
+
+      reply:
+        timeout: 60000
+        maxAttempts: 3
+        interval: 3000
+      concurrent:
+        consumers: 1
+      max:
+        concurrent:
+          consumers: 2
+      missingQueuesFatal: false
+      recoveryInitialInterval: 30000
+      recoveryMultiplierInterval: 2
+      recoveryMaxInterval: 120000
+      heartbeat: 60
+      networkRecoveryInterval: 60
+      channelCacheSize: 25
+      ssl:
+        keyStoreType: jks
+        trustStoreType: jks
+        skipServerCertificateValidation: false
+        sslAlgorithm: TLSv1.2
+  config:
+    web:
+      activationPath: login/activation?referenceKey=
+      activationTokenOperation: sec:users:activation
+      activationTemplate: request-activation-account-mail
+      recoveryPassPath: login/recovery?referenceKey=
+      recoveryTokenOperation: sec:users:activation
+      recoveryTemplate: request-change-password-mail
+  messages:
+    validation:
+      not-null: "El dato es requerido"
+      not-empty: "El dato no puede ir vacío"
+      not-blank: "El dato no puede ir vacío"
+
+jwt:
+   secret: $Pasdwew45sdf 

@@ -1,0 +1,616 @@
+server:
+  port: 5000
+
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check ## Enables health chech review
+      health-check:
+        refetch-instances: true
+        repeat-health-check: false
+        interval: 30s
+        path:
+          default: /veradat-actuator
+      retry:
+        enable: true ## This flag enable the retries of load balancer api gateway
+      cache:
+        enabled: false ## This flag will enable/disable api gateway cache
+        ttl: 30
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedHeaders: "*"
+            allowedMethods:
+            - GET 
+            - POST
+            - PUT
+            - DELETE
+            - PATCH
+      discovery:
+        locator:
+          enabled: true
+          lowerCaseServiceId: true
+          
+management:
+  endpoint:
+    gateway:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,gateway
+        
+veradat:
+   resources:
+      restClients:
+      -  name: API_AUTHENTICATE
+         controller: veradat-feb-node-users-security
+         path: /api/v1/sec/authenticate
+         method: POST
+
+      authServices:
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/login
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/logout
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/account/activate
+         method: POST 
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/account/forgot
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /saml/login
+         method: GET
+      -  invoker: veradat-feb-node-users-security
+         path: /saml2/authenticate/{registrationId}
+         method: GET
+      -  invoker: veradat-feb-node-users-security
+         path: /saml2/sso/azure
+         method: GET
+      -  invoker: veradat-feb-node-users-security
+         path: /saml2/sso/azure
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/external/login
+         method: GET
+
+      
+      apiClients:
+      ## Security
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/login
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/logout
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/security/token/refresh
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/account/activate
+         method: POST
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/account/forgot
+         method: POST
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/account/config/administration
+         method: POST
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/account/activation
+         method: PATCH
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/areas
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/functionalcategories
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/areas
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/groups
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/groups/permissions
+         method: POST
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/details
+         method: POST
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/areas
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/account/status
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users
+         method: DELETE
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users
+         method: PATCH
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users
+         method: POST 
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/password/update
+         method: PATCH
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/password/update
+         method: PATCH
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/area/{areaBK}
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/area
+         method: GET
+      -  invoker: veradat-feb-node-users-security-orq
+         path: /api/v1/users/account/activation/resend
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /saml/login
+         method: GET
+      -  invoker: veradat-feb-node-users-security
+         path: /saml2/authenticate/{registrationId}
+         method: GET
+      -  invoker: veradat-feb-node-users-security
+         path: /saml2/sso/azure
+         method: GET
+      -  invoker: veradat-feb-node-users-security
+         path: /saml2/sso/azure
+         method: POST
+      -  invoker: veradat-feb-node-users-security
+         path: /api/v1/external/login
+         method: GET
+
+
+      ## MESSAGES
+      -  invoker: feb-message-orq
+         path: /api/v1/message/file
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message/file/{fileInputDelete}
+         method: DELETE
+      -  invoker: feb-message-orq
+         path: /api/v1/message
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message-cipher/keyName
+         method: PUT
+      -  invoker: feb-message-orq
+         path: /api/v1/message-cipher/message
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message-cipher/file
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message-cipher/file
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message/conversation-status
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/conversations
+         method: GET
+      -  invoker: feb-message-orq
+         path: /api/v1/message/conversations/{conversationId}/messages
+         method: GET
+      -  invoker: feb-message-orq
+         path: /api/v1/message/files/{fieldId}
+         method: GET
+      -  invoker: feb-message-orq
+         path: /api/v1/message/conversations
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message/conversation-anonymity
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message/user
+         method: PUT
+      -  invoker: feb-message-orq
+         path: /api/v1/message/filter-conversations
+         method: POST
+      -  invoker: feb-message-orq
+         path: /api/v1/message/conversation/{conversationId}
+         method: GET
+      -  invoker: feb-message-orq
+         path: /api/v1/message/notifications
+         method: GET
+
+      ## Private List
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/national
+         method: POST 
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/foreign
+         method: POST
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/escrow
+         method: POST
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/foreign/clients
+         method: POST
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/escrows/clients
+         method: POST
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/delete/client
+         method: PUT
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/national/clients
+         method: POST
+      -  invoker: feb-privatelist-orq
+         path: /v1/privatelist/date/clients
+         method: POST
+
+
+      ## Watchlist
+      -  invoker: feb-watchlist-orq
+         path: /api/v1/watchlist
+         method: POST
+      -  invoker: feb-watchlist-orq
+         path: /api/v1/watchlist/{requestId}
+         method: GET
+      -  invoker: feb-watchlist-orq
+         path: /api/v1/watchlist/feb/single/getnational
+         method: POST 
+      -  invoker: feb-watchlist-orq
+         path: /api/v1/watchlist/feb/single/getforeign
+         method: POST 
+      -  invoker: feb-watchlist-orq
+         path: /api/v1/watchlist/feb/single/getescrow
+         method: POST
+      -  invoker: feb-watchlist-orq
+         path: /api/v1/watchlist/feb/getbydaterange
+         method: POST
+      
+      ## CASES
+      -  invoker: feb-case-orq
+         path: /api/v1/case/search
+         method: POST 
+      -  invoker: feb-case-orq
+         path: /api/v1/case/search/single-row
+         method: POST
+      -  invoker: feb-case-orq
+         path: /api/v1/case/status
+         method: PUT
+      -  invoker: feb-case-orq
+         path: /api/v1/case/
+         method: POST
+      -  invoker: feb-case-orq
+         path: /api/v1/case/user
+         method: PUT
+      -  invoker: feb-case-orq
+         path: /api/v1/case/search
+         method: POST 
+      -  invoker: feb-case-orq
+         path: /api/v1/case/search/single-row
+         method: POST
+      -  invoker: feb-case-orq
+         path: /api/v1/case/detail
+         method: POST
+      -  invoker: feb-case-orq
+         path: /api/v1/case
+         method: POST
+      -  invoker: feb-case-orq
+         path: /api/v1/cases
+         method: POST
+      -  invoker: feb-catalogs
+         path: /catalogs
+         method: POST
+      -  invoker: feb-catalogs
+         path: /catalogs
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /catalogs
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /catalogs
+         method: PATCH
+      -  invoker: feb-catalogs
+         path: /catalogs
+         method: GET
+
+      ## CATALOGS
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/{catalogType}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/catalogTypes
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/validate/{catalogType}/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/{catalogType}/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/{catalogType}/{businessKey}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/{catalogType}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/{catalogType}/{businessKey}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /Api/v1/catalogs/{catalogType}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/{codeIso2}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/validate/{codeIso2}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/{codeIso2}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/{codeIso2}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/crimeTypes
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/validate/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/crimeTypes
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/{businessKey}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/countries/{businessKey}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/genders
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/genders/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/genders/validate/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/genders/{businessKey}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/genders/{businessKey}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/genders
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/institutions/{institutionType}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/institutions/{institutionType}/{code}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/institutions/validate/{institutionType}/{code}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/institutions/{institutionType}/{code}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/institutions/{institutionType}/{code}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/institutions
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/originTypes
+         method: GET      
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/originTypes/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/originTypes/validate/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/originTypes/{businessKey}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/originTypes/{businessKey}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/originTypes
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/personTypes
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/personTypes/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/personTypes/validate/{businessKey}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/personTypes/{businessKey}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/personTypes/{businessKey}
+         method: PUT
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/personTypes
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/postalCodes/{country}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/postalCodes/validate/{country}/{code}
+         method: GET
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/postalCodes/{country}/{code}
+         method: DELETE
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/postalCodes
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/message-status/validate-message/{businessKey}
+         method: POST
+      -  invoker: feb-catalogs
+         path: /api/v1/catalogs/message-status/validate-conversation/{businessKey}
+         method: POST
+
+      ## ENQUERY
+      -  invoker: feb-enquery-orq
+         path: /api/v1/watchlist/enquery
+         method: POST
+      -  invoker: feb-enquery-orq
+         path: /api/v1/folio/enquery/{enqueryId}
+         method: GET
+      -  invoker: feb-enquery-orq
+         path: /api/v1/watchlist/enquery/{folio}
+         method: GET
+      -  invoker: feb-enquery-orq
+         path: /api/v1/enquery/national/history/search
+         method: POST
+      -  invoker: feb-enquery-orq
+         path: /api/v1/enquery/foreign/history/search
+         method: POST
+      -  invoker: feb-enquery-orq
+         path: /api/v1/enquery/escrow/history/search
+         method: POST
+      -  invoker: feb-enquery-orq
+         path: /api/v1/enquery/hits/detail
+         method: POST
+      -  invoker: feb-enquery-orq
+         path: /api/v1/enquery/history/search
+         method: POST
+      ## BATCH
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/process/progress/{batchProcessId}
+         method: GET
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/process/report/{batchProcessId}
+         method: GET
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/history/{domain}/{subdomain}/{chargeType}
+         method: GET
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/process-batch-files
+         method: POST 
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/add-batch-files
+         method: POST
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/files/{domain}/{subdomain}
+         method: GET
+      -  invoker: feb-batch-orq
+         path: api/v1/batch/process/last/{domain}
+         method: GET
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/{businessProcess}/process-file
+         method: POST
+      -  invoker: feb-batch-orq
+         path: /api/v1/batch/{businessProcess}/load-file
+         method: POST
+      ## ALERTS
+      -  invoker: feb-alerts-orq
+         path: /api/v1/alerts/national/history/search
+         method: POST
+      -  invoker: feb-alerts-orq
+         path: /api/v1/alerts/foreign/history/search
+         method: POST
+      -  invoker: feb-alerts-orq
+         path: /api/v1/alerts/escrow/history/search
+         method: POST
+      -  invoker: feb-alerts-orq
+         path: /api/v1/alerts/history/search
+         method: POST
+      -  invoker: feb-alerts-orq
+         path: /api/v1/alerts/new
+         method: GET
+      -  invoker: feb-alerts-orq
+         path: /api/v1/alerts/new
+         method: GET
+
+      ## DASHBOARDS   
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/card/originated
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/card/with-hits
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/pie-chart
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/information-quality
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/line-chart
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/alerts/card/receive-alerts
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/alerts/pie-chart
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/alerts/variations
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/card/originated
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/card/hits
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/card/enqueries-identifiers
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/pie-chart/with-hits
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/line-chart-whits
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/notifications
+         method: GET
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/associated-hits/card
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/associated-hits/pie-chart
+         method: POST
+      -  invoker: feb-dashboard-orq
+         path: /api/v1/dashboards/enquery/associated-hits/line-chart
+         method: POST
+
+      
+      ## Node Configuration
+
+      -  invoker: feb-cfg-orq
+         path: /api/v1/cfg/node
+         method: GET
+      -  invoker: feb-cfg-orq
+         path: /api/v2/catalogs
+         method: GET
+      -  invoker: feb-cfg-orq
+         path: /api/v2/catalog/{catalogName}
+         method: GET
+      -  invoker: feb-cfg-orq
+         path: /api/v2/catalog/{catalogName}/items
+         method: GET
+      -  invoker: feb-cfg-orq
+         path: /api/v2/catalog/{catalogName}/item/{businessKey}
+         method: GET
