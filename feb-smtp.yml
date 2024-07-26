@@ -12,7 +12,7 @@ logging:
 
 jwt:
   secret: $Pasdwew45sdf
-   
+
 veradat:
   microserviceId: FSMTP
   rest:
@@ -45,7 +45,7 @@ veradat:
     controller: https://graph.microsoft.com
     method: GET
     external: true
-  
+
   broker-messages:
     global:
       reprocessQueue: vdt_general_reprocess_queue
@@ -64,7 +64,7 @@ veradat:
           send-mail: feb.general_smtp-send-mail.queue
       output:
         queues:
-         
+
       reply:
         timeout: 60000
         maxAttempts: 3
@@ -91,5 +91,5 @@ veradat:
       disabled: true
   resources:
     notificationTesting:
-      enabled: true
-      mail: asantana@veradat.com
+      enabled: false
+      mail: bcarrillo@veradat.com
