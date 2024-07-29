@@ -1,27 +1,23 @@
-spring:
-  cloud:
-    loadbalancer:
-      configurations: health-check
-      eager-load:
-        clients: feb-cfg-proc,feb-watchlist-proc,feb-privatelist-proc,feb-catalogs
-      health-check:
-        refetch-instances-interval: 30s
-        refetch-instances: true
-        path:
-          default: /veradat-actuator/health
-
-
 logging:
-  #file.name: '/logs/${spring.application.name:}.log'
   level:
     root: WARN
     com.veradat: INFO
     org.springframework: ERROR
     org.hibernate: ERROR
   pattern:
-    #level: '%5p[${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
-    console: '%d %-5level [%thread] [%logger ]: %msg%n'
-    #file: '%d %-5level [%thread] [%logger] : %msg%n'
+    console: '%d %-5level [%logger ]: %msg%n'
+
+spring:
+  cloud:
+    loadbalancer:
+      configurations: health-check
+      eager-load:
+        clients: feb-cfg-proc,feb-watchlist-proc,feb-privatelist-proc,feb-catalogs,feb-enquery-proc,feb-alerts-proc
+      health-check:
+        refetch-instances-interval: 30s
+        refetch-instances: true
+        path:
+          default: /veradat-actuator/health
 
 management:
   endpoint:
@@ -38,7 +34,7 @@ management:
     defaults:
       enabled: false
     rabbit:
-      enabled: false
+      enabled: true
     redis:
       enabled: true
 
@@ -51,77 +47,78 @@ centralNode : Veradat
 veradat:
   microserviceId: FECO
   rest:
-    client: webclient
+    #Generales
+    client: webclient #parametros válidos [webclient,httpClient,restclient]
     validate-certs: true
     keystore:
-    keystorePassword: notifierqa
+    keystorePassword: notifiercert
     tlsVersion: TLSv1.2
-    check_after_inactivity_ms: 9000
+    check_after_inactivity_ms: 9000 #timeout para obtener la conexion con el servidor
     times_to_retry_on_error: 3
     time_to_retry_on_status_error_ms: 3000
-    maxRateLimit: 30
-    initialRateLimit: 15
-    timeout: 20000
-    responseTime_ms: 10000
+    maxRateLimit: 100
+    initialRateLimit: 20
+    timeout: 12000 #timeout para las respuesta del server
+    responseTime_ms: 5000 # especifica el tiempo promedio en que se espera la respuesta del servidor
     conn_timeout: 15000
+    #Especificos para webClient
+    crt: /etc/crt
+    key: /etc/keyv
     request_max_avg: 10
     request_max_pending_on_queue: 100
     request_pending_on_queue_timeout_ms: 10000
-    crt: /etc/crt
-    key: /etc/keyv
 
   restClients:
-    - name: VALIDATE_NODE
-      controller: feb-catalogs
-      path: /api/v1/catalogs/institutions/validate/BNK/{code}
+    - name: GET_ALL_NODES
+      controller: feb-cfg-proc
+      path: /api/v1/cfg/node
       method: GET
-    - name: GET_ALL_STATUS
-      controller: feb-catalogs
-      path: /api/v1/catalogos/cfg/status
-      method: GET
-    - name: GET_All_NODE_TYPE
-      controller: feb-catalogs
-      path: /api/v1/catalogs/{catalogType}
-      method: GET
-    - name: GET_ALL_SERVICES
-      controller: feb-catalogs
-      path: /api/v1/catalogos/cfg/service
-      method: GET
+
     - name: GET_COUNT_RECORDS_WL
       controller: feb-watchlist-proc
       path: /api/v1/watchlist/records
       method: GET
+
     - name: GET_COUNT_RECORDS_PL
       controller: feb-privatelist-proc
       path: /api/v1/privatelist/originType/all/record/count
       method: GET
-    - name: GET_ALL_NODES
-      controller: feb-catalogs
-      path: /api/v1/cfg/nodes
-      method: GET
+
     - name: VALIDATE_INSTITUTION
       controller: feb-catalogs
       path: /api/v1/catalogs/institutions/validate/BNK/{code}
       method: GET
-    - name: GET-CATALOGS
-      controller: feb-catalogs
-      path: /api/v2/catalogs?operationArea={operationArea}&includeItems={includeItems}
+
+    - name: GET_COUNT_RECORDS_EQ
+      controller: feb-enquery-proc
+      path: /api/v1/enquery/history/records/count
       method: GET
-      external: false
-    - name: DELETE-CATALOGS-REDIS
-      controller: feb-catalogs
-      path: /api/v2/catalogs/redis/delete
-      method: POST
-      external: false
+
+    - name: GET_COUNT_RECORDS_ALERT
+      controller: feb-alerts-proc
+      path: /api/v1/alerts/history/records/count
+      method: GET
+
     - name: GET_CATALOG_ITEM_LIST
       controller: feb-catalogs
       path: /api/v2/catalog/{catalogName}/items
       method: GET
-      external: false
+    
+    - name: GET-CATALOGS
+      controller: feb-catalogs
+      path: /api/v2/catalogs?operationArea={operationArea}&includeItems={includeItems}
+      method: GET
+    
+    - name: DELETE-CATALOGS-REDIS
+      controller: feb-catalogs
+      path: /api/v2/catalogs/redis/delete
+      method: POST
+
   security:
     permissions:
       disabled: false
   broker-messages:
+    messageBroker: rabbitmq
     global:
       reprocessQueue: vdt_general_reprocess_queue
       dlqQueue: vdt_general_dlq_queue
@@ -165,8 +162,10 @@ veradat:
       concurrent:
         consumers: 1
       max:
+        block:
+          ms: 15000
         concurrent:
-          consumers: 2
+          consumers: 1
       missingQueuesFatal: false
       recoveryInitialInterval: 30000
       recoveryMultiplierInterval: 2
