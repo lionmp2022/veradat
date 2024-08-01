@@ -167,7 +167,7 @@ veradat:
     - FBADM
     
     notificationTesting:
-      enabled: true
+      enabled: false
       mail: dacosta@veradat.com
     patterns:
       email: '^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'
